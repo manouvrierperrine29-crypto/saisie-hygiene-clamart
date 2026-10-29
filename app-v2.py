@@ -7,56 +7,159 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 import io
 import json
+import base64
 from datetime import date
 from PIL import Image
 
+# -----------------------------------------------------------------------------
 # Configuration de la page Streamlit pour tablette / mobile
+# -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Saisie Terrain v2 - Hygiène & Salubrité",
-    page_icon="🏠",
+    page_title="Saisie Terrain - Hygiène & Salubrité (Ville de Clamart)",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Style CSS personnalisé pour l'ergonomie sur tablette tactile
+# -----------------------------------------------------------------------------
+# Style CSS Institutionnel & Épuré (Bleu Marine #003366 & Gris Clair #F8F9FA)
+# -----------------------------------------------------------------------------
 st.markdown("""
     <style>
-    /* Styles tactiles */
+    /* Police globale et fond */
+    html, body, [class*="css"] {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* En-tête Institutionnel Ville de Clamart */
+    .clamart-header {
+        background: linear-gradient(135deg, #003366 0%, #002244 100%);
+        color: white;
+        padding: 20px 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .clamart-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0;
+        color: #FFFFFF;
+        letter-spacing: 0.5px;
+    }
+    .clamart-subtitle {
+        font-size: 0.95rem;
+        color: #D1E3F8;
+        margin-top: 4px;
+        font-weight: 400;
+    }
+    .clamart-badge {
+        background-color: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #F0F6FF;
+    }
+
+    /* Cartes de sections */
+    .card-box {
+        background-color: #FFFFFF;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #E2E8F0;
+        border-left: 5px solid #003366;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        margin-bottom: 20px;
+    }
+    .card-title {
+        color: #003366;
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Boutons tactiles renforcés */
     .stButton>button {
         width: 100%;
-        height: 3rem;
-        font-weight: bold;
-        font-size: 1.1rem;
+        height: 3.2rem;
+        font-weight: 600;
+        font-size: 1.05rem;
         border-radius: 8px;
-        background-color: #0056b3;
+        background-color: #003366;
         color: white;
+        border: none;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,51,102,0.2);
     }
-    .stTextArea textarea {
-        font-size: 1rem;
+    .stButton>button:hover {
+        background-color: #002244;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,51,102,0.3);
     }
-    .stTextInput input {
-        font-size: 1rem;
+
+    /* Onglets stylisés */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #F1F5F9;
+        padding: 8px;
+        border-radius: 10px;
     }
-    .main-header {
-        color: #003366;
-        text-align: center;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #003366;
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #475569;
+        background-color: transparent;
+        border: none;
+        padding: 0 16px;
     }
-    .section-card {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 5px solid #0056b3;
-        margin-bottom: 15px;
+    .stTabs [aria-selected="true"] {
+        background-color: #003366 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 2px 6px rgba(0,51,102,0.25);
+    }
+
+    /* Champs de saisie */
+    .stTextInput input, .stSelectbox select, .stTextArea textarea, .stNumberInput input {
+        border-radius: 6px !important;
+        border: 1px solid #CBD5E1 !important;
+        font-size: 0.98rem !important;
+    }
+    .stTextInput input:focus, .stTextArea textarea:focus {
+        border-color: #003366 !important;
+        box-shadow: 0 0 0 2px rgba(0,51,102,0.15) !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1 class='main-header'>🏠 Application Saisie Terrain - Visite Hygiène & Salubrité (v2)</h1>", unsafe_allow_html=True)
-st.caption("Ville de Clamart - Direction Hygiène, Sécurité et Santé au Travail — Version Tablette Améliorée")
+# -----------------------------------------------------------------------------
+# Bandeau En-Tête Officiel
+# -----------------------------------------------------------------------------
+st.markdown("""
+    <div class="clamart-header">
+        <div>
+            <div class="clamart-title">🏛️ Ville de Clamart — Hygiène & Salubrité</div>
+            <div class="clamart-subtitle">Direction Hygiène, Sécurité et Santé au Travail — Application Saisie Terrain (v4)</div>
+        </div>
+        <div class="clamart-badge">
+            Inspection Habitat
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
+# -----------------------------------------------------------------------------
 # Modèles types prédéfinis
+# -----------------------------------------------------------------------------
 PRESETS = {
     "Vierge": {},
     "Humidité & Ventilation défectueuse": {
@@ -98,21 +201,24 @@ PRESETS = {
     }
 }
 
-# Gestion des modèles prédéfinis via la barre latérale
+# -----------------------------------------------------------------------------
+# Gestion des Modèles & Brouillons JSON (Barre Latérale)
+# -----------------------------------------------------------------------------
 with st.sidebar:
-    st.header("⚙️ Modèles & Brouillons")
+    st.markdown("### ⚙️ Modèles & Brouillons")
     preset_choice = st.selectbox("Charger un modèle prédéfini :", list(PRESETS.keys()))
     
+    st.markdown("---")
     uploaded_json = st.file_uploader("📥 Importer un brouillon (.json)", type=["json"])
     if uploaded_json is not None:
         try:
             imported_data = json.load(uploaded_json)
             st.session_state['data_imported'] = imported_data
-            st.success("Brouillon chargé avec succès !")
+            st.success("✅ Brouillon restauré avec succès !")
         except Exception as e:
             st.error(f"Erreur de lecture du JSON : {e}")
 
-# Fonction d'aide pour appliquer le fond des cellules dans docx
+# Fonction d'aide pour fond de cellule Word
 def set_cell_background(cell, fill_hex):
     tcPr = cell._tc.get_or_add_tcPr()
     shd = OxmlElement('w:shd')
@@ -120,17 +226,19 @@ def set_cell_background(cell, fill_hex):
     shd.set(qn('w:val'), 'clear')
     tcPr.append(shd)
 
+# -----------------------------------------------------------------------------
+# Générateur du Rapport Word Officiel (.docx)
+# -----------------------------------------------------------------------------
 def create_docx_report(data, photos_list):
     doc = docx.Document()
     
-    # Marges de la page (2cm)
+    # Marges
     for section in doc.sections:
         section.top_margin = Inches(0.8)
         section.bottom_margin = Inches(0.8)
         section.left_margin = Inches(0.8)
         section.right_margin = Inches(0.8)
         
-    # Style normal
     style = doc.styles['Normal']
     font = style.font
     font.name = 'Arial'
@@ -145,7 +253,7 @@ def create_docx_report(data, photos_list):
     r_hdr.font.size = Pt(10)
 
     p_service = doc.add_paragraph()
-    r_srv = p_service.add_run("Direction Hygiène Sécurité et Santé au Travail\n")
+    r_srv = p_service.add_run("VILLE DE CLAMART\nDirection Hygiène Sécurité et Santé au Travail\n")
     r_srv.bold = True
     r_srv.font.color.rgb = RGBColor(0x00, 0x33, 0x66)
     r_srv.font.size = Pt(11)
@@ -154,7 +262,7 @@ def create_docx_report(data, photos_list):
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r_title = p_title.add_run("RAPPORT DE VISITE D'HYGIÈNE ET DE SALUBRITÉ DE L'HABITAT")
     r_title.bold = True
-    r_title.font.size = Pt(14)
+    r_title.font.size = Pt(13)
     r_title.font.color.rgb = RGBColor(0x00, 0x33, 0x66)
     p_title.paragraph_format.space_after = Pt(15)
 
@@ -162,13 +270,11 @@ def create_docx_report(data, photos_list):
     table_id = doc.add_table(rows=5, cols=2)
     table_id.alignment = WD_TABLE_ALIGNMENT.CENTER
     table_id.autofit = False
+    col_widths = [Inches(3.4), Inches(3.6)]
     
-    col_widths = [Inches(3.2), Inches(3.8)]
-    
-    # Header du tableau
     hdr_cells = table_id.rows[0].cells
     hdr_cells[0].merge(hdr_cells[1])
-    hdr_cells[0].text = "ÉLÉMENT D'IDENTIFICATION"
+    hdr_cells[0].text = "ÉLÉMENTS D'IDENTIFICATION"
     set_cell_background(hdr_cells[0], "003366")
     hdr_cells[0].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
     hdr_cells[0].paragraphs[0].runs[0].font.bold = True
@@ -189,7 +295,7 @@ def create_docx_report(data, photos_list):
             
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
-    # Descriptif du logement
+    # Descriptif logement
     p_desc = doc.add_paragraph()
     r_desc = p_desc.add_run("DESCRIPTIF DU LOGEMENT & CONSTAT")
     r_desc.bold = True
@@ -209,7 +315,7 @@ def create_docx_report(data, photos_list):
         [f"Personnes présentes : {data.get('personnes_presentes', '')}", f"Conditions de visite : {data.get('conditions_visite', '')}"]
     ]
     
-    for i, row in enumerate(row_data_index := desc_rows):
+    for i, row in enumerate(desc_rows):
         cells = table_desc.rows[i].cells
         for j in range(2):
             cells[j].text = row[j]
@@ -245,7 +351,7 @@ def create_docx_report(data, photos_list):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
-    # Avis Sanitaire & Prescriptions
+    # Prescriptions
     p_avis = doc.add_paragraph()
     r_avis = p_avis.add_run("AVIS SANITAIRE & PRESCRIPTIONS")
     r_avis.bold = True
@@ -280,7 +386,7 @@ def create_docx_report(data, photos_list):
     r_ccl_title.font.color.rgb = RGBColor(0x00, 0x33, 0x66)
     p_ccl.add_run(data.get("conclusion", "Aucune observation particulière."))
 
-    # Section Annexe Photos
+    # Annexe Photos
     if photos_list:
         doc.add_page_break()
         p_photo_title = doc.add_paragraph()
@@ -303,20 +409,23 @@ def create_docx_report(data, photos_list):
                 r_cap.font.size = Pt(9)
                 p_cap.paragraph_format.space_after = Pt(15)
             except Exception as img_err:
-                st.warning(f"Impossible d'insérer l'image {idx} : {img_err}")
+                st.warning(f"Note photo {idx} : {img_err}")
 
-    # Sauvegarde dans un buffer binaire
     buffer = io.BytesIO()
     doc.save(buffer)
     buffer.seek(0)
     return buffer
 
-# Récupération des données initiales depuis le preset ou l'import JSON
+# -----------------------------------------------------------------------------
+# Récupération des Données Initiales
+# -----------------------------------------------------------------------------
 init_data = PRESETS.get(preset_choice, {})
 if 'data_imported' in st.session_state:
     init_data = st.session_state['data_imported']
 
-# Interface formulaire par Onglets
+# -----------------------------------------------------------------------------
+# Navigation par Onglets Tactiles
+# -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 1. Identification", 
     "🏠 2. Logement", 
@@ -329,7 +438,7 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 data = {}
 
 with tab1:
-    st.subheader("Informations d'identification & Saisine")
+    st.markdown('<div class="card-box"><div class="card-title">📋 Informations d\'Identification & Saisine</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         data['ref_rapport'] = st.text_input("Référence du Rapport", value=init_data.get('ref_rapport', "REP-2026-001"))
@@ -343,9 +452,10 @@ with tab1:
         data['coord_mandataire'] = st.text_input("Coordonnées Mandataire", value=init_data.get('coord_mandataire', ''))
         data['plaignants'] = st.text_input("Nom & Prénom Plaignant(s)", value=init_data.get('plaignants', ''))
         data['date_saisine'] = st.text_input("Date saisine de la Ville", value=init_data.get('date_saisine', ''), placeholder="Ex: 10/10/2026")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab2:
-    st.subheader("Caractéristiques du Logement")
+    st.markdown('<div class="card-box"><div class="card-title">🏠 Caractéristiques du Logement</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         data['type_logement'] = st.radio("Type de logement", ["Collectif", "Individuel"], index=0 if init_data.get('type_logement') == "Collectif" else 1, horizontal=True)
@@ -369,15 +479,16 @@ with tab2:
         data['nb_enfants'] = st.number_input("Nombre d'enfants", min_value=0, value=int(init_data.get('nb_enfants', 1)))
         data['personnes_presentes'] = st.text_input("Personnes présentes lors de la visite", value=init_data.get('personnes_presentes', 'Occupant, Inspecteur Santé'))
         data['conditions_visite'] = st.selectbox("Conditions de visite", ["Normales", "Accès partiel", "Accès refusé", "Contestées"])
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab3:
-    st.subheader("Constats & Observations par pièce")
-    st.info("💡 **Astuce tablette :** Cochez les désordres fréquents pour pré-remplir les observations automatiquement !")
+    st.markdown('<div class="card-box"><div class="card-title">🔍 Constats & Observations par pièce</div>', unsafe_allow_html=True)
+    st.info("💡 **Astuce tablette :** Cochez les désordres fréquents ci-dessous pour pré-remplir les synthèses d'observation.")
     
     def render_piece_section(key_prefix, piece_name):
-        st.markdown(f"#### 🚪 {piece_name}")
+        st.markdown(f"##### 🚪 {piece_name}")
         quick_tags = st.multiselect(
-            f"Désordres observés dans : {piece_name}",
+            f"Désordres récurrents : {piece_name}",
             ["Humidité / Infiltrations", "Traces de moisissures", "Ventilation défectueuse/obstruée", "Problème d'étanchéité fenêtre", "Électricité vétuste/dangereuse", "Revêtement détérioré", "Manque de chauffage"],
             key=f"tags_{key_prefix}"
         )
@@ -386,7 +497,7 @@ with tab3:
             tag_str = f"Tags: {', '.join(quick_tags)}. "
             if tag_str not in base_obs:
                 base_obs = tag_str + base_obs
-        txt_obs = st.text_area(f"Observations détaillées - {piece_name}", value=base_obs, key=f"txt_{key_prefix}", height=100)
+        txt_obs = st.text_area(f"Observations détaillées - {piece_name}", value=base_obs, key=f"txt_{key_prefix}", height=95)
         return txt_obs
 
     data['obs_cuisine'] = render_piece_section("cuisine", "Cuisine")
@@ -396,35 +507,35 @@ with tab3:
     data['obs_ch1'] = render_piece_section("ch1", "Chambre 1")
     data['obs_ch2'] = render_piece_section("ch2", "Chambre 2")
     data['obs_autres'] = st.text_area("Autres pièces / Remarques d'ensemble", value=init_data.get('obs_autres', ''), height=80)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab4:
-    st.subheader("📸 Prise de Photos Terrain & Galerie")
-    st.markdown("Prenez des photos directement avec la caméra de votre tablette ou importez des fichiers depuis votre galerie pour les inclure automatiquement dans le rapport Word final.")
+    st.markdown('<div class="card-box"><div class="card-title">📸 Photos Terrain & Annexe Photographique</div>', unsafe_allow_html=True)
+    st.caption("Prenez des clichés avec l'appareil photo de la tablette ou joignez des fichiers images.")
     
     col_cam, col_upload = st.columns(2)
-    
     photos_captured = []
     
     with col_cam:
-        st.markdown("##### 📷 Prise de vue en direct (Caméra tablette)")
+        st.markdown("##### 📷 Caméra en direct")
         camera_photo = st.camera_input("Prendre une photo")
         if camera_photo:
-            cap_cam = st.text_input("Légende de la photo prise", value="Désordre constaté en visite")
+            cap_cam = st.text_input("Légende de la photo prise", value="Constat terrain")
             photos_captured.append((camera_photo.getvalue(), cap_cam))
-            st.image(camera_photo, caption="Aperçu photo caméra", width=300)
+            st.image(camera_photo, caption="Aperçu caméra", width=280)
 
     with col_upload:
-        st.markdown("##### 🖼️ Import depuis la galerie")
+        st.markdown("##### 🖼️ Fichiers images")
         uploaded_files = st.file_uploader("Sélectionner une ou plusieurs photos", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
         if uploaded_files:
             for idx, file in enumerate(uploaded_files):
-                cap_file = st.text_input(f"Légende pour {file.name}", value=f"Photo constat - {file.name}", key=f"cap_file_{idx}")
+                cap_file = st.text_input(f"Légende pour {file.name}", value=f"Photo - {file.name}", key=f"cap_file_{idx}")
                 photos_captured.append((file.getvalue(), cap_file))
-                st.image(file, caption=f"Aperçu : {file.name}", width=250)
+                st.image(file, caption=f"Aperçu : {file.name}", width=230)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab5:
-    st.subheader("Avis Sanitaire, Prescriptions & Conclusion")
-    
+    st.markdown('<div class="card-box"><div class="card-title">⚖️ Prescriptions & Conclusion</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("##### 🔨 À charge du PROPRIÉTAIRE")
@@ -435,7 +546,7 @@ with tab5:
         base_p = init_data.get("prescriptions_proprio", "")
         if quick_prop:
             base_p += "\n• " + "\n• ".join(quick_prop)
-        data['prescriptions_proprio'] = st.text_area("Prescriptions propriétaire détaillées", value=base_p, height=150)
+        data['prescriptions_proprio'] = st.text_area("Prescriptions propriétaire détaillées", value=base_p, height=140)
         
     with col2:
         st.markdown("##### 🧹 À charge du LOCATAIRE")
@@ -446,20 +557,21 @@ with tab5:
         base_l = init_data.get("prescriptions_locataire", "")
         if quick_loc:
             base_l += "\n• " + "\n• ".join(quick_loc)
-        data['prescriptions_locataire'] = st.text_area("Prescriptions locataire détaillées", value=base_l, height=150)
+        data['prescriptions_locataire'] = st.text_area("Prescriptions locataire détaillées", value=base_l, height=140)
 
-    st.markdown("##### 📝 Conclusion Générale")
-    data['conclusion'] = st.text_area("Conclusion globale du rapport", value=init_data.get("conclusion", "Logement nécessitant des travaux de remise en état d'aération et de traitement de l'humidité. Notification envoyée au propriétaire."), height=100)
+    st.markdown("##### 📝 Conclusion Globale du Rapport")
+    data['conclusion'] = st.text_area("Synthèse générale d'inspection", value=init_data.get("conclusion", "Logement nécessitant des travaux d'aération et de remise en état. Notification transmise au propriétaire."), height=90)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab6:
-    st.subheader("Génération, Sauvegarde & Téléchargement")
+    st.markdown('<div class="card-box"><div class="card-title">📥 Génération & Exports Officiels</div>', unsafe_allow_html=True)
     
     col_exp1, col_exp2 = st.columns(2)
     
     with col_exp1:
-        st.markdown("### 📄 Export Rapport Word Officiel (.docx)")
+        st.markdown("### 📄 Rapport Word Officiel (.docx)")
         if photos_captured:
-            st.info(f"📸 **{len(photos_captured)} photo(s)** sera/seront incluse(s) dans l'annexe photographique du document Word.")
+            st.success(f"📸 **{len(photos_captured)} photo(s)** prêtes à être intégrées dans l'annexe photographique.")
             
         docx_buffer = create_docx_report(data, photos_captured)
         file_name_docx = f"Rapport_Hygiene_{data.get('ref_rapport', 'Saisie')}.docx"
@@ -473,17 +585,24 @@ with tab6:
         
     with col_exp2:
         st.markdown("### 💾 Sauvegarde du Brouillon (.json)")
-        st.caption("Sauvegardez votre saisie en fichier JSON pour la reprendre plus tard ou la partager.")
+        st.caption("Générez le fichier JSON pour reprendre la saisie ultérieurement ou la sauvegarder.")
         
-        json_data = json.dumps(data, ensure_ascii=False, indent=2)
+        # Préparation du dictionnaire exportable
+        export_payload = data.copy()
+        
+        # Conversion du payload en octets UTF-8 pour un téléchargement binaire sans échec sur tablette
+        json_str = json.dumps(export_payload, ensure_ascii=False, indent=2)
+        json_bytes = json_str.encode('utf-8')
         file_name_json = f"Brouillon_{data.get('ref_rapport', 'Saisie')}.json"
         
         st.download_button(
             label="💾 Exporter le Brouillon (.json)",
-            data=json_data,
+            data=json_bytes,
             file_name=file_name_json,
             mime="application/json"
         )
-    
-    st.markdown("---")
-    st.caption("Application v2 développée pour les inspecteurs de salubrité - Ville de Clamart.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("---")
+st.caption("Ville de Clamart — Direction Hygiène, Sécurité et Santé au Travail | Application officielle développée pour les inspecteurs de l'habitat.")
+
