@@ -149,7 +149,7 @@ st.markdown("""
     <div class="clamart-header">
         <div>
             <div class="clamart-title">🏛️ Ville de Clamart — Hygiène & Salubrité</div>
-            <div class="clamart-subtitle">Direction Hygiène, Sécurité et Santé au Travail — Application Saisie Terrain (v5)</div>
+            <div class="clamart-subtitle">Direction Hygiène, Sécurité et Santé au Travail — Application Saisie Terrain (v6)</div>
         </div>
         <div class="clamart-badge">
             Inspection Habitat
@@ -161,26 +161,44 @@ st.markdown("""
 # Modèles types prédéfinis
 # -----------------------------------------------------------------------------
 PRESETS = {
-    "Vierge": {},
-    "Humidité & Ventilation défectueuse": {
+    "Vierge": {
+        "conclusion": "La présence de moisissures observée dans le logement est susceptible de porter atteinte à la santé des occupants. Il appartient au bailleur de faire procéder aux investigations nécessaires afin d'identifier et de supprimer les causes de ces désordres, puis de mettre en œuvre les mesures appropriées pour y remédier durablement, ainsi qu'à la remise en état des surfaces dégradées.
+
+Les prescriptions à la charge du bailleur devront être engagées dans les meilleurs délais et réalisées dans un délai maximal de deux mois à compter de la notification du présent rapport.
+
+À l'issue de ce délai de deux mois, une nouvelle visite de contrôle sera réalisée par la Direction de l'Hygiène, de la Sécurité et de la Santé au Travail (HSST) de la Ville afin de vérifier la bonne exécution des prescriptions et le rétablissement de conditions conformes aux exigences de salubrité.
+
+En l'absence d'actions engagées ou en cas de mesures insuffisantes ne permettant pas la résolution effective des désordres constatés, il sera procédé à la mise en œuvre des dispositions réglementaires en vigueur, conformément aux textes applicables."
+    },
+    "Humidité & Moisissures (Modèle Officiel DHSST)": {
         "type_logement": "Collectif",
         "typologie": "T3",
         "surface_mesuree": 52.0,
         "surface_declaree": 55.0,
         "hauteur_plafond": 2.50,
         "eclairage_naturel": "Moyen",
-        "chauffage": "Gaz individuel",
-        "loyer": 820,
+        "chauffage": "Gaz collectif",
+        "loyer": 750,
         "mode_paiement": "Virement",
-        "nb_occupants": 3,
-        "nb_enfants": 1,
-        "obs_cuisine": "Tags: Humidité / Infiltrations, Traces de moisissures. VMC obstruée par de la graisse et traces d'humidité sous évier.",
-        "obs_sdb": "Tags: Traces de moisissures, Ventilation défectueuse/obstruée. Moisissures importantes sur les joints du bac à douche et au plafond.",
-        "obs_ch1": "Tags: Humidité / Infiltrations. Traces de condensation sur le mur donnant sur l'extérieur.",
-        "obs_ch2": "Traces légères d'humidité autour du châssis de vitre.",
-        "prescriptions_proprio": "• Remise en état du système de ventilation (VMC/Grilles)\n• Traitement des infiltrations d'eau en façade/toiture",
-        "prescriptions_locataire": "• Nettoyage et désinfection des moisissures\n• Aération régulière du logement (2x10min/jour)",
-        "conclusion": "Logement nécessitant des travaux d'aération et de traitement de l'humidité par le propriétaire, combiné à une meilleure aération quotidienne par l'occupant."
+        "nb_occupants": 4,
+        "nb_enfants": 2,
+        "obs_cuisine": "Absence totale de bouche d'extraction / de sortie d'air vicié haute, ne permettant pas le renouvellement permanent de l'air ambiant conformément aux normes d'aération.",
+        "obs_sejour": "Présence de grilles d'entrée d'air neuf en partie haute des menuiseries extérieures, propres, non obturées et fonctionnelles, assurant l'amenée d'air neuf réglementaire conformément au principe de balayage de l'air.",
+        "obs_wc": "Absence de système d'extraction d'air vicié (VMC) pour assurer le renouvellement permanent d'air de la pièce. Traces de moisissures en partie basse sur les parois.",
+        "obs_sdb": "Dispositif d'aération présent et fonctionnel. Traces de moisissures constatées sur les joints du bac à douche et au plafond.",
+        "obs_ch1": "Grilles d'entrée d'air neuf propres et non obturées. Présence généralisée de moisissures ainsi que des traces d'humidité sur les parois murales et au plafond.",
+        "obs_ch2": "Traces de moisissures et d'humidité localisées en partie haute du placard encastré et au plafond. Saturation d'humidité des parois (mesurée à l'humidimètre).",
+        "prescriptions_proprio": "• Procéder à l'identification et à la suppression des causes d'humidité à l'origine du développement de moisissures (infiltrations, ponts thermiques, fuites...), puis assurer la remise en état complète des parois et revêtements dégradés dans l'ensemble des pièces concernées.
+• Mettre en place un dispositif d'extraction d'air vicié garantissant le débit d'extraction minimal réglementaire afin d'assurer l'aération et le renouvellement d'air permanent du logement.",
+        "prescriptions_locataire": "• Assurer l'aération quotidienne des pièces (au minimum 10 minutes par jour) et maintenir le logement propre et entretenu.
+• Veiller au nettoyage régulier et à la non-obturation des grilles d'entrée d'air neuf situées sur les menuiseries extérieures et des bouches d'aération, sans encombrer les parties hautes afin de permettre la circulation d'air.",
+        "conclusion": "La présence de moisissures observée dans le logement est susceptible de porter atteinte à la santé des occupants. Il appartient au bailleur de faire procéder aux investigations nécessaires afin d'identifier et de supprimer les causes de ces désordres, puis de mettre en œuvre les mesures appropriées pour y remédier durablement, ainsi qu'à la remise en état des surfaces dégradées.
+
+Les prescriptions à la charge du bailleur devront être engagées dans les meilleurs délais et réalisées dans un délai maximal de deux mois à compter de la notification du présent rapport.
+
+À l'issue de ce délai de deux mois, une nouvelle visite de contrôle sera réalisée par la Direction de l'Hygiène, de la Sécurité et de la Santé au Travail (HSST) de la Ville afin de vérifier la bonne exécution des prescriptions et le rétablissement de conditions conformes aux exigences de salubrité.
+
+En l'absence d'actions engagées ou en cas de mesures insuffisantes ne permettant pas la résolution effective des désordres constatés, il sera procédé à la mise en œuvre des dispositions réglementaires en vigueur, conformément aux textes applicables."
     },
     "Électricité vétuste & Risque de sécurité": {
         "type_logement": "Collectif",
@@ -196,9 +214,14 @@ PRESETS = {
         "nb_enfants": 0,
         "obs_sejour": "Tags: Électricité vétuste/dangereuse. Prises de courant descellées du mur avec fils apparents.",
         "obs_cuisine": "Tags: Électricité vétuste/dangereuse. Absence de prise de terre à proximité du point d'eau.",
-        "prescriptions_proprio": "• Remise aux normes de l'installation électrique\n• Remplacement des prises descellées et pose de disjoncteurs différentiels 30mA",
+        "prescriptions_proprio": "• Remise aux normes de l'installation électrique
+• Remplacement des prises descellées et pose de disjoncteurs différentiels 30mA",
         "prescriptions_locataire": "• Dégagement des rallonges électriques inutilisées",
-        "conclusion": "Installation électrique présentant un risque immédiat pour la sécurité des occupants. Mis en demeure du propriétaire pour mise aux normes."
+        "conclusion": "Installation électrique présentant un risque immédiat pour la sécurité des occupants. Mise en demeure du propriétaire pour mise aux normes.
+
+Les prescriptions à la charge du bailleur devront être engagées dans les meilleurs délais et réalisées dans un délai maximal de deux mois à compter de la notification du présent rapport.
+
+À l'issue de ce délai de deux mois, une nouvelle visite de contrôle sera réalisée par la Direction de l'Hygiène, de la Sécurité et de la Santé au Travail (HSST) de la Ville afin de vérifier la bonne exécution des prescriptions et le rétablissement de conditions conformes aux exigences de salubrité."
     }
 }
 
@@ -632,7 +655,13 @@ with tab5:
         data['prescriptions_locataire'] = st.text_area("Prescriptions locataire détaillées", value=base_l, height=140)
 
     st.markdown("##### 📝 Conclusion Globale du Rapport")
-    data['conclusion'] = st.text_area("Synthèse générale d'inspection", value=init_data.get("conclusion", "Logement nécessitant des travaux d'aération et de remise en état. Notification transmise au propriétaire."), height=90)
+    data['conclusion'] = st.text_area("Synthèse générale d'inspection", value=init_data.get("conclusion", "La présence de moisissures observée dans le logement est susceptible de porter atteinte à la santé des occupants. Il appartient au bailleur de faire procéder aux investigations nécessaires afin d'identifier et de supprimer les causes de ces désordres, puis de mettre en œuvre les mesures appropriées pour y remédier durablement, ainsi qu'à la remise en état des surfaces dégradées.
+
+Les prescriptions à la charge du bailleur devront être engagées dans les meilleurs délais et réalisées dans un délai maximal de deux mois à compter de la notification du présent rapport.
+
+À l’issue de ce délai de deux mois, une nouvelle visite de contrôle sera réalisée par la Direction de l’Hygiène, de la Sécurité et de la Santé au Travail (HSST) de la Ville afin de vérifier la bonne exécution des prescriptions et le rétablissement de conditions conformes aux exigences de salubrité.
+
+En l’absence d’actions engagées ou en cas de mesures insuffisantes ne permettant pas la résolution effective des désordres constatés, il sera procédé à la mise en œuvre des dispositions réglementaires en vigueur, conformément aux textes applicables."), height=90)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab6:
