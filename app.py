@@ -149,7 +149,7 @@ st.markdown("""
     <div class="clamart-header">
         <div>
             <div class="clamart-title">🏛️ Ville de Clamart — Hygiène & Salubrité</div>
-            <div class="clamart-subtitle">Direction Hygiène, Sécurité et Santé au Travail — Application Saisie Terrain (v4)</div>
+            <div class="clamart-subtitle">Direction Hygiène, Sécurité et Santé au Travail — Application Saisie Terrain (v5)</div>
         </div>
         <div class="clamart-badge">
             Inspection Habitat
@@ -177,6 +177,7 @@ PRESETS = {
         "obs_cuisine": "Tags: Humidité / Infiltrations, Traces de moisissures. VMC obstruée par de la graisse et traces d'humidité sous évier.",
         "obs_sdb": "Tags: Traces de moisissures, Ventilation défectueuse/obstruée. Moisissures importantes sur les joints du bac à douche et au plafond.",
         "obs_ch1": "Tags: Humidité / Infiltrations. Traces de condensation sur le mur donnant sur l'extérieur.",
+        "obs_ch2": "Traces légères d'humidité autour du châssis de vitre.",
         "prescriptions_proprio": "• Remise en état du système de ventilation (VMC/Grilles)\n• Traitement des infiltrations d'eau en façade/toiture",
         "prescriptions_locataire": "• Nettoyage et désinfection des moisissures\n• Aération régulière du logement (2x10min/jour)",
         "conclusion": "Logement nécessitant des travaux d'aération et de traitement de l'humidité par le propriétaire, combiné à une meilleure aération quotidienne par l'occupant."
@@ -229,7 +230,7 @@ def set_cell_background(cell, fill_hex):
 # -----------------------------------------------------------------------------
 # Générateur du Rapport Word Officiel (.docx)
 # -----------------------------------------------------------------------------
-def create_docx_report(data, photos_list):
+def create_docx_report(data, photos_list, pieces_dict):
     doc = docx.Document()
     
     # Marges
@@ -331,23 +332,13 @@ def create_docx_report(data, photos_list):
     r_obs.font.size = Pt(11)
     r_obs.font.color.rgb = RGBColor(0x00, 0x33, 0x66)
 
-    pieces = [
-        ("Cuisine", data.get("obs_cuisine", "")),
-        ("Séjour", data.get("obs_sejour", "")),
-        ("WC", data.get("obs_wc", "")),
-        ("Salle de bain", data.get("obs_sdb", "")),
-        ("Chambre 1", data.get("obs_ch1", "")),
-        ("Chambre 2", data.get("obs_ch2", "")),
-        ("Autres / Remarques complémentaires", data.get("obs_autres", ""))
-    ]
-
-    for nom_piece, obs_text in pieces:
-        if obs_text and obs_text.strip():
+    for nom_piece, obs_text in pieces_dict.items():
+        if obs_text and str(obs_text).strip():
             p_p = doc.add_paragraph()
             r_pname = p_p.add_run(f"• {nom_piece} : ")
             r_pname.bold = True
             r_pname.font.color.rgb = RGBColor(0x00, 0x56, 0xB3)
-            p_p.add_run(obs_text)
+            p_p.add_run(str(obs_text))
 
     doc.add_paragraph().paragraph_format.space_after = Pt(10)
 
@@ -428,8 +419,8 @@ if 'data_imported' in st.session_state:
 # -----------------------------------------------------------------------------
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📋 1. Identification", 
-    "🏠 2. Logement", 
-    "🔍 3. Constat / Pièces", 
+    "🏠 2. Logement & Pièces", 
+    "🔍 3. Constats / Pièces", 
     "📸 4. Photos Terrain",
     "⚖️ 5. Prescriptions",
     "📥 6. Exporter Word"
@@ -455,11 +446,11 @@ with tab1:
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab2:
-    st.markdown('<div class="card-box"><div class="card-title">🏠 Caractéristiques du Logement</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-box"><div class="card-title">🏠 Caractéristiques du Logement & Gestion des Pièces</div>', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         data['type_logement'] = st.radio("Type de logement", ["Collectif", "Individuel"], index=0 if init_data.get('type_logement') == "Collectif" else 1, horizontal=True)
-        data['typologie'] = st.selectbox("Typologie", ["T1", "T2", "T3", "T4", "T5", "T6", "Autre"], index=["T1", "T2", "T3", "T4", "T5", "T6", "Autre"].index(init_data.get('typologie', 'T3')))
+        data['typologie'] = st.selectbox("Typologie du logement", ["T1", "T2", "T3", "T4", "T5", "T6", "Autre"], index=["T1", "T2", "T3", "T4", "T5", "T6", "Autre"].index(init_data.get('typologie', 'T3')))
         data['surface_mesuree'] = st.number_input("Surface mesurée (m²)", min_value=0.0, value=float(init_data.get('surface_mesuree', 45.0)), step=0.5)
         data['surface_declaree'] = st.number_input("Surface déclarée (m²)", min_value=0.0, value=float(init_data.get('surface_declaree', 48.0)), step=0.5)
         data['hauteur_plafond'] = st.number_input("Hauteur sous plafond (m)", min_value=0.0, value=float(init_data.get('hauteur_plafond', 2.50)), step=0.05)
@@ -479,11 +470,84 @@ with tab2:
         data['nb_enfants'] = st.number_input("Nombre d'enfants", min_value=0, value=int(init_data.get('nb_enfants', 1)))
         data['personnes_presentes'] = st.text_input("Personnes présentes lors de la visite", value=init_data.get('personnes_presentes', 'Occupant, Inspecteur Santé'))
         data['conditions_visite'] = st.selectbox("Conditions de visite", ["Normales", "Accès partiel", "Accès refusé", "Contestées"])
+
+    st.markdown("---")
+    st.subheader("🚪 Configuration dynamique des pièces du logement")
+    
+    # 1. Calcul automatique du nombre de chambres selon la typologie sélectionnée
+    typo_bedrooms_map = {
+        "T1": 0,
+        "T2": 1,
+        "T3": 2,
+        "T4": 3,
+        "T5": 4,
+        "T6": 5,
+        "Autre": 1
+    }
+    nb_chambres_auto = typo_bedrooms_map.get(data['typologie'], 1)
+    
+    st.info(f"💡 **Détection typologie ({data['typologie']}) :** {nb_chambres_auto} chambre(s) générée(s) automatiquement + pièces de base (Cuisine, Séjour, WC, Salle de bain).")
+    
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        # Permettre d'ajuster le nombre de chambres si besoin
+        data['nb_chambres'] = st.number_input("Nombre de chambres à inspecter", min_value=0, max_value=10, value=int(init_data.get('nb_chambres', nb_chambres_auto)))
+        
+    with col_p2:
+        # Pièces annexes pré-définies sélectionnables
+        extra_options_preset = ["Buanderie", "Cave", "Garage", "Cellier", "Dressing", "Balcon / Terrasse", "Combles", "Entrée / Couloir", "Débarras", "Mezzanine"]
+        data['extra_pieces_selected'] = st.multiselect(
+            "➕ Ajouter des pièces annexes (sélection rapide) :",
+            options=extra_options_preset,
+            default=init_data.get('extra_pieces_selected', [])
+        )
+    
+    # Champ pour ajouter une pièce personnalisée spécifique
+    custom_piece_input = st.text_input("✍️ Ajouter une autre pièce personnalisée (ex: Véranda, Atelier, Chaufferie...)", value="", placeholder="Tapez le nom de la pièce et appuyez sur Entrée")
+    if 'custom_pieces_list' not in st.session_state:
+        st.session_state['custom_pieces_list'] = init_data.get('custom_pieces_list', [])
+        
+    if custom_piece_input and custom_piece_input.strip() not in st.session_state['custom_pieces_list']:
+        st.session_state['custom_pieces_list'].append(custom_piece_input.strip())
+        st.success(f"Pièce '{custom_piece_input.strip()}' ajoutée !")
+
+    if st.session_state['custom_pieces_list']:
+        st.caption(f"📌 Pièces personnalisées ajoutées : {', '.join(st.session_state['custom_pieces_list'])}")
+        if st.button("🗑️ Réinitialiser les pièces personnalisées"):
+            st.session_state['custom_pieces_list'] = []
+            st.rerun()
+
+    data['custom_pieces_list'] = st.session_state['custom_pieces_list']
     st.markdown('</div>', unsafe_allow_html=True)
+
+# -----------------------------------------------------------------------------
+# Construction de la Liste Complète Dynamique des Pièces
+# -----------------------------------------------------------------------------
+# Pièces de base obligatoires
+active_pieces = [
+    ("cuisine", "Cuisine"),
+    ("sejour", "Séjour"),
+    ("wc", "WC"),
+    ("sdb", "Salle de bain")
+]
+
+# Chambres générées automatiquement selon le choix
+for ch_idx in range(1, data['nb_chambres'] + 1):
+    active_pieces.append((f"ch{ch_idx}", f"Chambre {ch_idx}"))
+
+# Pièces annexes sélectionnées (Buanderie, Cave, Garage...)
+for ext_p in data['extra_pieces_selected']:
+    slug_ext = ext_p.lower().replace(" ", "_").replace("/", "_")
+    active_pieces.append((f"ext_{slug_ext}", ext_p))
+
+# Pièces personnalisées saisies au clavier
+for cust_p in data['custom_pieces_list']:
+    slug_cust = cust_p.lower().replace(" ", "_").replace("/", "_")
+    active_pieces.append((f"cust_{slug_cust}", cust_p))
 
 with tab3:
     st.markdown('<div class="card-box"><div class="card-title">🔍 Constats & Observations par pièce</div>', unsafe_allow_html=True)
-    st.info("💡 **Astuce tablette :** Cochez les désordres fréquents ci-dessous pour pré-remplir les synthèses d'observation.")
+    st.info(f"💡 **{len(active_pieces)} pièce(s) active(s)** détectée(s) pour cette inspection. Cochez les désordres fréquents pour pré-remplir les synthèses.")
     
     def render_piece_section(key_prefix, piece_name):
         st.markdown(f"##### 🚪 {piece_name}")
@@ -500,13 +564,21 @@ with tab3:
         txt_obs = st.text_area(f"Observations détaillées - {piece_name}", value=base_obs, key=f"txt_{key_prefix}", height=95)
         return txt_obs
 
-    data['obs_cuisine'] = render_piece_section("cuisine", "Cuisine")
-    data['obs_sejour'] = render_piece_section("sejour", "Séjour")
-    data['obs_wc'] = render_piece_section("wc", "WC")
-    data['obs_sdb'] = render_piece_section("sdb", "Salle de bain")
-    data['obs_ch1'] = render_piece_section("ch1", "Chambre 1")
-    data['obs_ch2'] = render_piece_section("ch2", "Chambre 2")
-    data['obs_autres'] = st.text_area("Autres pièces / Remarques d'ensemble", value=init_data.get('obs_autres', ''), height=80)
+    # Dictionnaire des observations collectées
+    pieces_observations_dict = {}
+    
+    for key_prefix, piece_name in active_pieces:
+        obs_val = render_piece_section(key_prefix, piece_name)
+        data[f"obs_{key_prefix}"] = obs_val
+        if obs_val and obs_val.strip():
+            pieces_observations_dict[piece_name] = obs_val
+
+    st.markdown("##### 📝 Autres pièces / Remarques d'ensemble")
+    obs_autres = st.text_area("Remarques complémentaires d'ensemble", value=init_data.get('obs_autres', ''), height=80)
+    data['obs_autres'] = obs_autres
+    if obs_autres and obs_autres.strip():
+        pieces_observations_dict["Autres / Remarques complémentaires"] = obs_autres
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 with tab4:
@@ -573,7 +645,7 @@ with tab6:
         if photos_captured:
             st.success(f"📸 **{len(photos_captured)} photo(s)** prêtes à être intégrées dans l'annexe photographique.")
             
-        docx_buffer = create_docx_report(data, photos_captured)
+        docx_buffer = create_docx_report(data, photos_captured, pieces_observations_dict)
         file_name_docx = f"Rapport_Hygiene_{data.get('ref_rapport', 'Saisie')}.docx"
         
         st.download_button(
@@ -589,8 +661,9 @@ with tab6:
         
         # Préparation du dictionnaire exportable
         export_payload = data.copy()
+        export_payload['pieces_observations_dict'] = pieces_observations_dict
         
-        # Conversion du payload en octets UTF-8 pour un téléchargement binaire sans échec sur tablette
+        # Conversion du payload en octets UTF-8
         json_str = json.dumps(export_payload, ensure_ascii=False, indent=2)
         json_bytes = json_str.encode('utf-8')
         file_name_json = f"Brouillon_{data.get('ref_rapport', 'Saisie')}.json"
@@ -605,4 +678,3 @@ with tab6:
 
 st.markdown("---")
 st.caption("Ville de Clamart — Direction Hygiène, Sécurité et Santé au Travail | Application officielle développée pour les inspecteurs de l'habitat.")
-
